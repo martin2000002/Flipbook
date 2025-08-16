@@ -1,0 +1,102 @@
+
+
+  .flipbook-wrapper * {
+    overflow: visible !important;
+  }
+
+  body {
+    overflow: hidden !important;
+  }
+
+
+
+    /* Estilo base del input con clase page-slider */
+input.page-slider[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 16px;
+    background: transparent;
+    cursor: pointer;
+  }
+  
+  /* TRACK */
+  input.page-slider[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    overflow: visible;
+  }
+  
+  /* THUMB */
+  input.page-slider[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 40px; 
+    height: 8px;
+    background: white;
+    border-radius: 9999px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    margin-top: 0px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  
+    /* Animación suave */
+    //transform-origin: center center;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  
+  /* Rebote al hacer click o soltar */
+  input.page-slider[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.2); /* Efecto de rebote leve */
+  }
+  
+  /* Firefox */
+  input.page-slider[type="range"]::-moz-range-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    overflow: visible;
+  }
+  
+  input.page-slider[type="range"]::-moz-range-thumb {
+    width: 40px;
+    height: 8px;
+    background: white;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 9999px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  
+  input.page-slider[type="range"]:active::-moz-range-thumb {
+    transform: scale(1.2); /* Rebote también en Firefox */
+  }
+
+  
+  
+  
+
+  /* styles.css o global.css si usas Tailwind directamente */
+
+  
+
+//   .flipbook-wrapper {
+//     transition: transform 0.7s ease;
+//     transform-origin: center center;
+//   }
+
+//   .zoom-wrapper {
+//     overflow: hidden;
+//     touch-action: none; /* Previene zoom del navegador */
+//     cursor: grab;
+//     user-select: none;
+//   }
+  
+//   .zoom-wrapper:active {
+//     cursor: grabbing;
+//   }
+  
+//   .page img {
+//     pointer-events: none; /* Previene que las imágenes interfieran con el pan */
+//   }
+  

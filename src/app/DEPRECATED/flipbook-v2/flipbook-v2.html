@@ -1,0 +1,48 @@
+<div class="h-screen w-screen flex flex-col justify-center items-center gap-6 bg-gray-50 overflow-hidden">
+    <div class="flipbook-wrapper relative">
+        <div
+        #flipbook
+        id="flipbook"
+        [ngClass]="{
+            'transition-all duration-700 ease-in-out': animateFlipbook
+          }"
+        [style.marginLeft.px]="flipbookMarginLeft"
+      >
+      
+      
+      <!-- <div class="hard flex items-center justify-center bg-gray-800 text-white text-xl">PORTADA</div>
+      <div class="hard bg-gray-800"></div> -->
+    
+      <div *ngFor="let page of pages; let i = index" class="page" [style.width.px]="getFlibookSize().pageWidth" [style.height.px]="getFlibookSize().pageHeight">
+        <pdf-viewer
+          [src]="pdfSrc"
+          [page]="i + 1"
+          [render-text]="true"
+          [show-all]="false"
+            [fit-to-page]="true"
+          (after-load-complete)="onPdfLoadComplete()"
+          style="width: 100%; height: 100%;"
+        ></pdf-viewer>
+      </div>
+    
+      <!-- <div class="hard bg-gray-800"></div>
+      <div class="hard flex items-center justify-center bg-gray-900 text-white text-xl">FIN</div> -->
+    </div>
+    
+    <div
+    *ngIf="false"
+    class="absolute top-0 left-0 z-20 pointer-events-auto bg-red-500"
+  ></div>
+  
+  <div
+    class="absolute top-0 right-0 w-20 h-20 z-20 pointer-events-none"
+    [class.pointer-events-auto]="false"
+  ></div>
+</div>
+
+    <div class="flex gap-4">
+      <button (click)="prev()" class="px-4 py-2 bg-blue-600 text-white rounded">Anterior</button>
+      <button (click)="next()" class="px-4 py-2 bg-blue-600 text-white rounded">Siguiente</button>
+    </div>
+  </div>
+  

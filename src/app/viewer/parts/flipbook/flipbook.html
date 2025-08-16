@@ -1,0 +1,28 @@
+<div class="flipbook-wrapper select-none zoom-wrapper border" [ngStyle]="{
+    width: wrapperContainerStyle.width + 'px',
+    height: wrapperContainerStyle.height + 'px',
+    top: wrapperContainerStyle.top + 'px',
+    left: wrapperContainerStyle.left + 'px',
+    position: 'absolute',
+    borderColor: 'red',
+    borderWidth: '2px',
+    borderStyle: 'solid'
+  }
+  
+  ">
+
+    <div #flipbook id="flipbook" class="opacity-40" style="touch-action: none" [ngClass]="{
+        'transition-all duration-700 ease-in-out': false
+      }">
+
+        <div *ngFor="let image of pages" class="page">
+            <img [src]="image" loading="lazy" (load)="onImageLoad()" />
+        </div>
+
+    </div>
+
+    <div *ngIf="false" class="absolute top-0 left-0 z-20 pointer-events-auto bg-red-500"></div>
+
+    <div class="absolute top-0 right-0 w-20 h-20 z-20 pointer-events-none" [class.pointer-events-auto]="false">
+    </div>
+</div>
