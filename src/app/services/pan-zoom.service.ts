@@ -1,6 +1,8 @@
 import { Injectable, ElementRef } from '@angular/core';
 import Panzoom, { PanzoomObject, ZoomOptions } from '@panzoom/panzoom';
 import { FlipbookService } from './flipbook.service';
+import { BehaviorSubject } from 'rxjs';
+import { clamp } from '../utils/math.utils';
 
 @Injectable({
     providedIn: 'root'
@@ -17,6 +19,15 @@ export class PanZoomService {
         lastScale: 0
     }
 
+    private sigmoideStepScaleActive = false;
+    private readonly defaultStep = 0.3;
+    private targetElementDimensions!: DOMRect;
+
+    private scaleSubject = new BehaviorSubject<number>(1);
+    public scale$ = this.scaleSubject.asObservable();
+
+    constructor(private flipbookService: FlipbookService) { }
+
     setTarget(element: HTMLElement | ElementRef<HTMLElement>): void {
         if (!element) {
             throw new Error('PanZoomService: El elemento proporcionado es inválido.');
@@ -25,15 +36,19 @@ export class PanZoomService {
     }
 
     createPanzoom(): void {
+        this.flipbookService.disable();
+
         this.forceStop = false;
         this.scaleData = {
             deltaScale: 0,
             lastScale: 0
         }
-        
+
         this.assertTargetSet();
 
         if (this.panzoomInstance) return;
+
+        this.targetElementDimensions = this.targetElement!.getBoundingClientRect();
 
         this.panzoomInstance = Panzoom(this.targetElement!, {
             maxScale: 10,
@@ -41,7 +56,7 @@ export class PanZoomService {
             contain: 'outside',
             cursor: 'grab',
             overflow: 'visible',
-            step: 1
+            step: this.defaultStep
         });
 
         this.panzoomEnabled = true;
@@ -51,30 +66,42 @@ export class PanZoomService {
             'panzoomchange',
             (e: any) => {
                 // e.detail contiene { scale, x, y, isDragging }
-                
+
+
+
                 const scale = e.detail.scale;
-                const newStep = 3.3 / (1 + Math.pow(Math.E, -0.4*(scale - 4)));
-                this.panzoomInstance?.setOptions({step: newStep})
+
+                if (scale === this.scaleData.lastScale) {
+                    return;
+                }
+
+                if (this.sigmoideStepScaleActive) {
+                    this.sigmoideStepScale(scale);
+                }
 
                 this.scaleData.deltaScale = scale - this.scaleData.lastScale;
-                
-                if (scale === 1 && this.scaleData.deltaScale < 0 && scale === 1 && !this.forceStop) {
+
+                const scaleMarginError = 0.1;
+                if ((scale >= 1 - scaleMarginError && scale <= 1 + scaleMarginError) && this.scaleData.deltaScale < 0 && !this.forceStop) {
                     // Si vuelve al zoom 1, destruir panzoom
                     this.forceStop = true;
                     this.destroyPanzoom();
-                    
+
                 }
 
                 this.scaleData.lastScale = scale;
-                
+
+                this.scaleSubject.next(scale);
+
             }
         );
     }
 
     destroyPanzoom(): void {
-        console.log("destroy")
         this.assertTargetSet();
         this.assertInstanceSet();
+
+        this.disableSigmoideStepScale();
 
         this.resetZoom(true);
 
@@ -84,9 +111,29 @@ export class PanZoomService {
 
         this.targetElement!.style.touchAction = 'auto';
         this.targetElement!.style.cursor = 'default';
+        setTimeout(() => {
+            this.targetElement!.style.transition = 'margin-left 0.7s ease-in-out';
+        }, 100);
+       
         if (this.targetElement!.parentElement) {
             this.targetElement!.parentElement.style.overflow = 'visible';
         }
+
+        this.flipbookService.enable();
+    }
+
+    enableSigmoideStepScale(): void {
+        this.sigmoideStepScaleActive = true;
+    }
+
+    disableSigmoideStepScale(): void {
+        this.sigmoideStepScaleActive = false;
+        this.panzoomInstance?.setOptions({ step: this.defaultStep });
+    }
+
+    sigmoideStepScale(scale: number): void {
+        const newStep = 3.3 / (1 + Math.pow(Math.E, -0.4 * (scale - 4)));
+        this.panzoomInstance?.setOptions({ step: newStep });
     }
 
     zoomIn(step: number = 0.2): void {
@@ -129,13 +176,57 @@ export class PanZoomService {
         }, 1);
     }
 
+    zoomToCenterPage(scale: number, page: number, animate: boolean = false): void {
+        const clampedScale = clamp(scale, 1, 10);
+
+        this.assertTargetSet;
+
+        if (!this.panzoomInstance) {
+            this.createPanzoom();
+            setTimeout(() => {
+                this.zoomCenter(clampedScale, page, animate);
+            }, 1);
+        } else {
+            this.zoomCenter(clampedScale, page, animate);
+        }
+
+
+        this.scaleSubject.next(clampedScale); // notificamos el nuevo valor cuando venga del slider
+    }
+
+    private zoomCenter(scale: number, page: number, animate: boolean = false): void {
+        const rect = this.targetElement!.getBoundingClientRect();
+        const display = this.flipbookService.$flipbook.turn('display');
+        if (display === 'single') {
+            this.getOrCreateInstance().zoom(scale, { focal: { x: 0, y: 0 }, animate: animate });
+        } else {
+            const side = (page % 2 === 0) ? -1 : 1;
+
+            this.getOrCreateInstance().zoom(scale, { focal: { x: side * rect.width / 3.3333, y: 0 }, animate: animate });
+        }
+    }
+
     resetZoom(skipAsserts: boolean = false): void {
         if (!skipAsserts) {
             this.assertTargetSet();
             this.assertInstanceSet();
         }
-        
+
         this.panzoomInstance?.reset();
+    }
+
+    zoomWithWheel(event: WheelEvent): void {
+        if (event.deltaY < 0) { // zoom in
+            this.getOrCreateInstance().zoomWithWheel(event);
+
+        } else { // zoom out
+
+            if (this.panzoomInstance) {
+                this.panzoomInstance.zoomWithWheel(event);
+            }
+
+        }
+
     }
 
     getInstance(): PanzoomObject | null {

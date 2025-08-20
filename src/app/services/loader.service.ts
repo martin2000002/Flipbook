@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { FlipbookService } from './flipbook.service';
+import { clamp } from '../utils/math.utils';
 
 @Injectable({
     providedIn: 'root',
@@ -10,6 +11,13 @@ export class LoaderService {
     private progressSubject = new BehaviorSubject<number>(0);
     public loading$ = this.loadingSubject.asObservable();
     public loadProgress$ = this.progressSubject.asObservable();
+
+    private readonly config = {
+        realMaximumProgress: 75,
+        fakeProgressDuration: 1000
+    }
+
+    private fakeProgressTimer?: any;
 
     constructor (private flipbookService: FlipbookService) {}
 
@@ -30,13 +38,43 @@ export class LoaderService {
     }
 
     setProgress(progress: number): void {
-        const clamped = Math.min(Math.max(progress, 0), 100);
-        this.progressSubject.next(clamped);
-        if (clamped >= 100) {
+        const progressClamped = clamp(progress, 0, 100);
+        const progressSealed = (progressClamped * this.config.realMaximumProgress) / 100;
+
+        this.progressSubject.next(Math.round(progressSealed));
+        
+        if (progressClamped >= 100) {
             this.flipbookService.markFlipbookReady();
-            setTimeout(() => {
-                this.hide();
-            }, 500);
+            this.completeWithFakeProgress();
         }
+    }
+
+    completeWithFakeProgress(): void {
+        const target = 100;
+        const steps = 30;
+        const stepTime = this.config.fakeProgressDuration / steps;
+        const increment = (target - this.config.realMaximumProgress) / steps;
+
+        if (this.fakeProgressTimer) {
+            clearInterval(this.fakeProgressTimer);
+        }
+
+        let currentProgress = this.config.realMaximumProgress;
+        this.fakeProgressTimer = setInterval(() => {
+            currentProgress += increment;
+            if (currentProgress >= target) {
+                this.progressSubject.next(100);
+                clearInterval(this.fakeProgressTimer);
+                this.fakeProgressTimer = undefined;
+
+                //FINALIZO
+                setTimeout(
+                    () => this.hide()
+                , 500);
+
+            } else {
+                this.progressSubject.next(Math.round(currentProgress));
+            }
+        }, stepTime);
     }
 }

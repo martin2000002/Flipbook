@@ -27,7 +27,6 @@ export class Home {
 
     setTimeout(() => {
       this.loading = false;
-      console.log('PDF cargado después de delay controlado');
     }, wait);
   }
 

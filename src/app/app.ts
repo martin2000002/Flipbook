@@ -15,8 +15,8 @@ export class App {
     console.error = function (...args: any[]) {
       if (
         args[0] &&
-        typeof args[0] === 'string' &&
-        args[0].includes('offsetParent is not set')
+        typeof args[0] === 'string' 
+        //args[0].includes('offsetParent is not set')
       ) {
         // Ignorar este mensaje específico
         return;

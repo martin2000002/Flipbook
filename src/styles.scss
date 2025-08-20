@@ -1,11 +1,20 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
 
-body {
-  background-color: #333333; // o el gris oscuro que elegiste
-  margin: 0;
-  padding: 0;
-  height: 100%;
+:root {
+  --bottom-bar-offset: 5vh;
+  --slider-pages-thumb-width: 40px;
+  --slider-pages-thumb-height: 8px;
+  --slider-default-thumb-width: 0;
+  --slider-default-thumb-height: 8px;
+  --slider-default-track-height: 8px;
+  --slider-background-color: rgba(255, 255, 255, 0.2);
+  --background-color: #222222;
+}
+
+@theme {
+  --breakpoint-sm-450: 450px;
+  --color-background-color: var(--background-color);
 }
 
 html,
@@ -13,15 +22,17 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  background-color: var(--background-color); 
   height: 100%;
 }
+
 
 /* Desactiva los estilos nativos */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 16px;
+  height: var(--slider-default-track-height);
   /* espacio vertical para track y thumb */
   background: transparent;
   cursor: pointer;
@@ -30,8 +41,8 @@ input[type="range"] {
 
 /* Barra base (track) */
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
+  height: var(--slider-default-track-height);
+  background: var(--slider-background-color);
   border-radius: 9999px;
   overflow: hidden;
   position: relative;
@@ -41,15 +52,13 @@ input[type="range"]::-webkit-slider-runnable-track {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 0px;
-  height: 8px;
+  width: var(--slider-default-thumb-width);
+  height: var(--slider-default-thumb-height);
   background: white;
   border-radius: 9999px;
   box-shadow: -1000px 0 0 1000px white;
 
-  //margin-top: 0px; /* Alinear el thumb con el track */
-  /* centrado vertical: (alto del track - alto del thumb) / 2 */
-  margin-top: calc((8px - 8px) / 2);
+  margin-top: calc((var(--slider-default-track-height) - var(--slider-default-thumb-height)) / 2);
 
   position: relative;
   z-index: 2;
@@ -59,27 +68,25 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Firefox support */
 input[type="range"]::-moz-range-track {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
+  height: var(--slider-default-track-height);
+  background: var(--slider-background-color);
   border-radius: 9999px;
 }
 
 input[type="range"]::-moz-range-progress {
   background: white;
-  height: 8px;
+  height: var(--slider-default-track-height);
   border-radius: 9999px;
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 0px;
-  height: 8px;
+  width: var(--slider-default-thumb-width);
+  height: var(--slider-default-thumb-height);
   background: white;
   border-radius: 9999px;
   box-shadow: -1000px 0 0 1000px white;
 
-  //margin-top: 0px; /* Alinear el thumb con el track */
-  /* centrado vertical: (alto del track - alto del thumb) / 2 */
-  margin-top: calc((8px - 8px) / 2);
+  margin-top: calc((var(--slider-default-track-height) - var(--slider-default-thumb-height)) / 2);
 
   position: relative;
   z-index: 2;
@@ -94,25 +101,12 @@ input[type="range"]:focus {
 }
 
 input[type="range"]:focus-visible {
-  box-shadow: 0 0 7px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 7px var(--slider-background-color);
   /* halo suave tipo macOS */
   border-radius: 9999px;
   /* opcional: bordes redondeados */
-  padding: 4px 6px;
+  padding: 8px 6px;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #flipbook {
   perspective: 1000px;
@@ -129,9 +123,4 @@ input[type="range"]:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-
-
-@theme {
-  --breakpoint-sm-450: 450px;
 }

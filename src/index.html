@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>Portafolio - Fran Borja</title>
@@ -8,7 +9,24 @@
 
   <link rel="icon" type="image/x-icon" href="assets/logo.png">
 </head>
+
 <body>
   <app-root></app-root>
 </body>
+<script>
+  // Bloquea zoom con Ctrl + scroll
+  document.addEventListener('wheel', function (e) {
+    if (e.ctrlKey) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Bloquea zoom con Ctrl + +/-
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && ['+', '-', '='].includes(e.key)) {
+      e.preventDefault();
+    }
+  });
+</script>
+
 </html>

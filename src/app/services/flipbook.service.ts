@@ -20,7 +20,23 @@ export class FlipbookService {
   $flipbook!: any;
 
   private flipbookReadySubject = new BehaviorSubject<boolean>(false);
+  private disabled = false;
+
   flipbookReady$ = this.flipbookReadySubject.asObservable();
+
+  disable(): void {
+    this.disabled = true;
+    this.$flipbook.turn('disable', true);
+  }
+
+  enable(): void {
+    this.disabled = false;
+    this.$flipbook.turn('disable', false);
+  }
+
+  isDisabled(): boolean {
+    return this.disabled;
+  }
 
   setFlipbookElement(el: HTMLElement) {
     this.$flipbook = $(el);

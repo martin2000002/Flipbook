@@ -1,42 +1,36 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, Input, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DownloadIcon, Maximize2Icon, Minimize2Icon, LucideAngularModule, ThumbsDown } from 'lucide-angular';
+import { DownloadIcon, Maximize2Icon, Minimize2Icon, LucideAngularModule, PlusIcon, MinusIcon } from 'lucide-angular';
 import { FlipbookService } from '../../../services/flipbook.service';
-import { Subscription, filter, switchMap, take } from 'rxjs';
+import { Subscription, filter, take } from 'rxjs';
+import { PanZoomService } from '../../../services/pan-zoom.service';
+import { IconButton } from '../../../shared/icon-button/icon-button';
+import { ElementMetricsService } from '../../../services/element-metrics.service';
 
 @Component({
   selector: 'app-bottom-bar',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, IconButton],
   templateUrl: './bottom-bar.html',
   styleUrl: './bottom-bar.scss',
 })
 export class BottomBar {
   @ViewChild('pageSlider', { static: true }) pageSliderRef!: ElementRef<HTMLInputElement>;
   @ViewChild('buttomBar') buttomBarRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('preview', { static: false }) previewRef!: ElementRef<HTMLDivElement>;
 
   @Input() visible = false;
 
   isFullscreen = false;
-  isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
-
   isDragging = false;
+  showPreview = false;
   previewImages: string[] = [];
   previewLabel = '';
   pagesText = '';
-  lastPage = 0;
-  animatingSlider = false;
-  lastTurnedByArrows = 0;
-
-  thumbLeft = 0;
-
+  isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   currentPageSlider = 1;
   sliderStep = 1;
   totalPages = 0;
   zoom = 0;
-  pageSettedWithSlider = false;
-
   previewImageStyle = {
     width: 0,
     height: 0
@@ -46,14 +40,36 @@ export class BottomBar {
     left: 0,
     top: 0
   };
-
   readonly icons = {
     maximize: Maximize2Icon,
     minimize: Minimize2Icon,
     download: DownloadIcon,
+    plus: PlusIcon,
+    minus: MinusIcon
   };
 
+  get pageTextWidth(): string {
+    const maxDigits = this.totalPages.toString().length;
+    const totalCharacters = maxDigits * 3 + 6; // a - b / c → a = maxDigits, b = maxDigits, c = maxDigits, 6 símbolos(' - ', ' / ')
+    const corrected = totalCharacters * 0.75;
+    return `${corrected}ch`;
+  }
+
+  private isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
+  private animatingSlider = false;
+  private lastTurnedByArrows = 0;
+  private pageSettedWithSlider = false;
   private sub = new Subscription();
+
+  private get currentPage(): number {
+    return Math.round(this.currentPageSlider);
+  }
+
+  constructor(
+    private flipbookService: FlipbookService,
+    private panZoomService: PanZoomService,
+    private elementMetricsService: ElementMetricsService
+  ) { }
 
   @HostListener('window:resize')
   onResize() {
@@ -61,33 +77,9 @@ export class BottomBar {
     this.setPageInfo();
   }
 
-  isExpanded = false; // nuevo: estado de la barra
-
-expandBar() {
-  this.isExpanded = true;
-}
-
-collapseBar() {
-  this.isExpanded = false;
-}
-
-// Detectar click fuera
-@HostListener('document:click', ['$event'])
-onClickOutside(event: MouseEvent) {
-  if (
-    this.isExpanded &&
-    this.buttomBarRef &&
-    !this.buttomBarRef.nativeElement.contains(event.target as Node)
-  ) {
-    this.collapseBar();
-  }
-}
-
-
-  constructor(private flipbookService: FlipbookService) { }
-
-  ngOnInit() {
+  ngOnInit(): void {
     document.addEventListener('fullscreenchange', this.fullscreenChangeHandler);
+
     this.sub.add(
       this.flipbookService.flipbookReady$
         .pipe(filter(ready => ready), take(1))
@@ -95,7 +87,24 @@ onClickOutside(event: MouseEvent) {
           this.flipbookReady();
         })
     );
+
+    this.sub.add(
+      this.panZoomService.scale$.subscribe(scale => {
+        this.zoom = scale - 1;
+      })
+    );
   }
+
+  ngAfterViewInit(): void {
+    const rect = this.buttomBarRef.nativeElement.getBoundingClientRect();
+    this.elementMetricsService.setMetrics('buttomBar', rect);
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+    document.removeEventListener('fullscreenchange', this.fullscreenChangeHandler);
+  }
+
   private fullscreenChangeHandler = () => {
     this.isFullscreen = !!(
       document.fullscreenElement ||
@@ -104,113 +113,23 @@ onClickOutside(event: MouseEvent) {
     );
   };
 
-get currentPage(): number {
-  return Math.round(this.currentPageSlider);
-}
-
-  flipbookReady() {
+  private flipbookReady(): void {
     this.totalPages = this.flipbookService.getTotalPages();
     this.pagesText = `1 / ${this.totalPages}`;
     this.setPreviewImageSize();
 
-    // this.sub.add(
-    //   this.flipbookService.displayMode$.subscribe(display => {
-    //     this.setPageInfo(display);
-    //   })
-    // );
-
     this.flipbookService.$flipbook.bind('turned', (e: any, page: number, view: any) => {
-      const display = this.flipbookService.$flipbook.turn('display');
-      // this.lastPage = Math.round(this.currentPage);
-      // this.currentPage = page;
-      // if (display === 'double') {
-      //     this.sliderPage = (page - (page % 2))/2 + 1;
-        
-      // }
       if (!this.pageSettedWithSlider && !this.isDragging) {
-        this.animatingSlider = true;
-        this.animateChangeSliderValue(page);
-        
+        this.currentPageSlider = page;
+        this.setPageInfo();
+
       } else {
         this.pageSettedWithSlider = false;
       }
     });
   }
 
-  animateChangeSliderValue(newValue: number, duration: number = 250) {
-    this.sliderStep = 0.001;
-    const start = performance.now();
-    const currentValue = this.currentPage;
-
-    const step = (now: number) => {
-      
-      let t = now - start;
-      let progress = Math.min(t / duration, 1); // entre 0 y 1
-  
-      // Easing
-      let eased = this.easeInOutCubic(progress);
-  
-      // Nueva posición
-      let x = currentValue + (newValue - currentValue) * eased;
-  
-      // Aquí actualizas tu variable ligada al template
-      this.currentPageSlider = x;
-  
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      } else {
-        //this.currentPageSlider = this.currentPage;
-        this.sliderStep = 1;
-        this.setPageInfo();
-        this.animatingSlider = false;
-      }
-    };
-
-    requestAnimationFrame(step);
-  }
-
-  easeInOutCubic(p: number): number {
-    return p < 0.5
-    ? 4 * Math.pow(p, 3)
-    : 1 - Math.pow(-2*p + 2, 3)/2; 
-  }
-
-  easeInOutQuad(p: number): number {
-    return p < 0.5
-    ? 2 * p * p 
-    : 1 - Math.pow(-2 * p + 2, 2) / 2;
-  }
-
-  setPageInfo() {
-    const display = this.flipbookService.$flipbook.turn('display');
-
-    if (display == 'double') {
-      //this.sliderMax = (this.totalPages) / 2 + 1;
-      if (this.currentPage == 1 || this.currentPage == this.totalPages) {
-        this.pagesText = `${this.currentPage} / ${this.totalPages}`;
-      } else {
-        const {page1, page2} = this.getPageGroup(this.currentPage);
-        this.pagesText = `${page1} - ${page2} / ${this.totalPages}`;
-      }
-    } else {
-      this.pagesText = `${this.currentPage} / ${this.totalPages}`;
-    }
-  }
-
-  private getPageGroup (page: number) : {page1: number, page2: number} {
-    const groupIndex = (this.currentPage - (this.currentPage % 2))/2 + 1;
-    const page1 = 2*(groupIndex-1);
-    const page2 = page1 + 1;
-    return {page1, page2};
-  }
-
-  ngOnDestroy(): void {
-    this.sub.unsubscribe();
-    document.removeEventListener('fullscreenchange', this.fullscreenChangeHandler);
-
-  }
-
-  private setPreviewImageSize() {
+  private setPreviewImageSize(): void {
 
     this.flipbookService.getImageSizeAsync().then((size: { width: number; height: number }) => {
       const screenWidth = window.innerWidth;
@@ -238,8 +157,6 @@ get currentPage(): number {
 
       height = dimentionsRatio * width;
       this.previewImageStyle = { width, height };
-
-      this.setPreviewContainerPosition();
     });
   }
 
@@ -252,44 +169,63 @@ get currentPage(): number {
 
     const min = Number(pageSlider.min);
     const max = Number(pageSlider.max);
-    const val = Number(pageSlider.value);
+    const val = this.currentPageSlider;
 
     const pageSliderRect = pageSlider.getBoundingClientRect();
     const percent = (val - min) / (max - min);
     const thumbX = percent * pageSliderRect.width;
-    const sliderAdjustment = (-2 * 40 * percent + 40) / 2; //40 -> thumb width
+    const thumbWidthPx = getComputedStyle(document.documentElement).getPropertyValue('--slider-pages-thumb-width');
+    const thumbWidthNumber = parseFloat(thumbWidthPx);
+    const sliderAdjustment = (-2 * thumbWidthNumber * percent + thumbWidthNumber) / 2;
 
     const screenWidth = window.innerWidth;
-    const previewContainerWidth = this.previewImageStyle.width * this.previewImages.length + 20; //20 -> container padding + flex gap
-
+    const gapWidth = this.previewImages.length === 1 ? 0 : 4;
+    const previewContainerWidth = this.previewImageStyle.width * this.previewImages.length + 16 + gapWidth; //16 -> padding
     const widthScreen_ButtomBar = (screenWidth - buttomBar.offsetWidth) / 2
     const widthButtomBar_PageSlider = (buttomBar.offsetWidth - pageSliderRect.width) / 2;
-
     const left = widthScreen_ButtomBar + widthButtomBar_PageSlider - previewContainerWidth / 2 + thumbX + sliderAdjustment;
 
     //top
     const previewContainerHeight = this.previewImageStyle.height + 31.99; //31.99 -> text height + text padding + container padding
-
     const top = buttomBarRect.top - previewContainerHeight - 8;
 
     this.previewContainerStyle = { left, top };
   }
 
-  get pageTextWidth(): string {
-    const maxDigits = this.totalPages.toString().length;
-    const totalCharacters = maxDigits * 3 + 6; // a - b / c → a = maxDigits, b = maxDigits, c = maxDigits, 6 símbolos(' - ', ' / ')
-    const corrected = totalCharacters *0.75;
-    return `${corrected}ch`;
+  private setPageInfo(): void {
+    const display = this.flipbookService.$flipbook.turn('display');
+
+    if (display == 'double') {
+      if (this.currentPage == 1 || this.currentPage == this.totalPages) {
+        this.pagesText = `${this.currentPage} / ${this.totalPages}`;
+      } else {
+        const { page1, page2 } = this.getPageGroup();
+        this.pagesText = `${page1} - ${page2} / ${this.totalPages}`;
+      }
+    } else {
+      this.pagesText = `${this.currentPage} / ${this.totalPages}`;
+    }
   }
 
-  zoomOut() {
-    throw new Error('Method not implemented.');
-  }
-  zoomIn() {
-    throw new Error('Method not implemented.');
+  private getPageGroup(): { page1: number, page2: number } {
+    const groupIndex = (this.currentPage - (this.currentPage % 2)) / 2 + 1;
+    const page1 = 2 * (groupIndex - 1);
+    const page2 = page1 + 1;
+    return { page1, page2 };
   }
 
-  downloadPDF() {
+  zoomOut(): void {
+    this.panZoomService.zoomToCenterPage(this.zoom, this.currentPage, true);
+  }
+  zoomIn(): void {
+    this.panZoomService.zoomToCenterPage(this.zoom + 2, this.currentPage, true);
+  }
+
+  onSliderChange(): void {
+    this.panZoomService.zoomToCenterPage(this.zoom + 1, this.currentPage);
+  }
+
+  downloadPDF(): void {
     if (this.isIOS) {
       // En iOS abrir en otra pestaña
       window.open('assets/pdfs/portafolio-op.pdf', '_blank');
@@ -308,8 +244,7 @@ get currentPage(): number {
     }
   }
 
-
-  toggleFullscreen() {
+  toggleFullscreen(): void {
     if (!this.isIOS) {
       if (this.isFullscreen) {
         this.exitFullscreen();
@@ -319,7 +254,7 @@ get currentPage(): number {
     }
   }
 
-  enterFullscreen() {
+  private enterFullscreen(): void {
     const elem = document.documentElement; // Toda la página
     if (elem.requestFullscreen) {
       elem.requestFullscreen();
@@ -330,7 +265,7 @@ get currentPage(): number {
     }
   }
 
-  exitFullscreen() {
+  private exitFullscreen(): void {
     if (document.exitFullscreen) {
       document.exitFullscreen();
     } else if ((document as any).webkitExitFullscreen) {
@@ -340,83 +275,53 @@ get currentPage(): number {
     }
   }
 
-onSliderTouchStart(event: TouchEvent, slider: HTMLInputElement) {
-  console.log("entro")
-  const touch = event.touches[0];
-  const rect = slider.getBoundingClientRect();
-  const percent = (touch.clientX - rect.left) / rect.width;
-  const value = (+slider.min) + percent * (+slider.max - +slider.min);
-
-  // Colocar el thumb donde tocó
-  slider.value = String(Math.round(value / +slider.step) * +slider.step);
-  //slider.dispatchEvent(new Event('input', { bubbles: true }));
-
-  this.onSliderStart();
-  this.isDragging = true;
-
-  // Escuchar movimiento
-  const moveHandler = (e: TouchEvent) => {
-    if (!this.isDragging) return;
-    const t = e.touches[0];
-    const p = (t.clientX - rect.left) / rect.width;
-    const v = (+slider.min) + p * (+slider.max - +slider.min);
-    slider.value = String(Math.round(v / +slider.step) * +slider.step);
-    //slider.dispatchEvent(new Event('input', { bubbles: true }));
-  };
-
-  const endHandler = () => {
-    this.onSliderEnd();
-    window.removeEventListener('touchmove', moveHandler);
-    window.removeEventListener('touchend', endHandler);
-    window.removeEventListener('touchcancel', endHandler);
-  };
-
-  window.addEventListener('touchmove', moveHandler);
-  window.addEventListener('touchend', endHandler);
-  window.addEventListener('touchcancel', endHandler);
-}
-
-
-  onSliderStart() {
-    this.sliderStep = 0.001;
-    this.isDragging = true;
-    this.updatePreview();
-  }
-
-  onSliderMove() {
-    if (this.isDragging) {
-      this.updatePreview();
+  onSliderTouchStartPage(event: TouchEvent, slider: HTMLInputElement): void {
+    function valueInStep(value: number): number {
+      return Math.round(value / +slider.step) * +slider.step;
     }
-  }
 
-  onSliderEnd() {
-    console.log('end')
-    this.sliderStep = 1;
-    this.pageSettedWithSlider = true;
-    
-  
-    setTimeout(() => {
-      this.currentPageSlider = this.currentPage;
-      this.isDragging = false;
-    }, 10);
-    console.log("turning")
-    this.flipbookService.$flipbook.turn('page', this.currentPage);
-    this.setPageInfo();
-    
+    const touch = event.touches[0];
+    const rect = slider.getBoundingClientRect();
+    const percent = (touch.clientX - rect.left) / rect.width;
+    const value = (+slider.min) + percent * (+slider.max - +slider.min);
+
+    // Colocar el thumb donde tocó
+    slider.value = String(valueInStep(value));
+    this.currentPageSlider = +slider.value;
+    this.onSliderStart();
+
+    // Escuchar movimiento
+    const moveHandler = (e: TouchEvent) => {
+      if (!this.isDragging) return;
+      const t = e.touches[0];
+      const p = (t.clientX - rect.left) / rect.width;
+      const v = (+slider.min) + p * (+slider.max - +slider.min);
+      slider.value = String(valueInStep(v));
+      this.currentPageSlider = +slider.value;
+      this.updatePreview();
+    };
+
+    const endHandler = () => {
+      this.onSliderEnd();
+      window.removeEventListener('touchmove', moveHandler);
+      window.removeEventListener('touchend', endHandler);
+      window.removeEventListener('touchcancel', endHandler);
+    };
+
+    window.addEventListener('touchmove', moveHandler);
+    window.addEventListener('touchend', endHandler);
+    window.addEventListener('touchcancel', endHandler);
   }
 
   updatePreview() {
     const display = this.flipbookService.$flipbook.turn('display');
     const isSmall = (display === 'single') || (this.currentPage === 1) || (this.currentPage === this.totalPages);
 
-    // Imágenes a mostrar
     if (isSmall) {
-      //this.previewImages = [`assets/flipbook/low/portafolio-op-${current}.webp`];
-
       this.previewImages = [this.flipbookService.getPageImage(this.currentPage, 'low')];
       this.previewLabel = `${this.currentPage}`;
     } else {
-      const {page1, page2} = this.getPageGroup(this.currentPage);
+      const { page1, page2 } = this.getPageGroup();
 
       this.previewImages = [
         this.flipbookService.getPageImage(page1, 'low'),
@@ -424,22 +329,84 @@ onSliderTouchStart(event: TouchEvent, slider: HTMLInputElement) {
       ];
       this.previewLabel = `${page1}-${page2}`;
     }
-
     this.setPreviewContainerPosition();
   }
 
+  onSliderTouchStartZoom(event: TouchEvent, slider: HTMLInputElement): void {
+    const touch = event.touches[0];
+    const rect = slider.getBoundingClientRect();
+    const percent = (touch.clientX - rect.left) / rect.width;
+    const value = (+slider.min) + percent * (+slider.max - +slider.min);
 
+    // Colocar el thumb donde tocó
+    this.zoom = Math.round(value / +slider.step) * +slider.step;
 
-  onSliderValueChange(newValue: number) {
-    const {page1, page2} = this.getPageGroup(newValue);
-    
+    // Escuchar movimiento
+    const moveHandler = (e: TouchEvent) => {
+      const t = e.touches[0];
+      const p = (t.clientX - rect.left) / rect.width;
+      const v = (+slider.min) + p * (+slider.max - +slider.min);
+      this.zoom = Math.round(v / +slider.step) * +slider.step;
+      this.onSliderChange();
+    };
+
+    const endHandler = () => {
+      window.removeEventListener('touchmove', moveHandler);
+      window.removeEventListener('touchend', endHandler);
+      window.removeEventListener('touchcancel', endHandler);
+    };
+
+    window.addEventListener('touchmove', moveHandler);
+    window.addEventListener('touchend', endHandler);
+    window.addEventListener('touchcancel', endHandler);
+  }
+
+  onSliderStart(): void {
+    this.sliderStep = 0.001;
+    this.isDragging = true;
+    this.showPreview = true;
+    this.updatePreview();
+  }
+
+  onSliderMove(): void {
+    if (this.isDragging) {
+      this.updatePreview();
+    }
+  }
+
+  onSliderEnd(): void {
+    this.sliderStep = 1;
+    this.pageSettedWithSlider = true;
+    this.currentPageSlider = this.currentPage;
+    this.setPreviewContainerPosition();
+    this.isDragging = false;
+    setTimeout(() => {
+      this.showPreview = false;
+    }, 300);
+    this.ensureTurnPage();
+    this.setPageInfo();
+  }
+
+  private ensureTurnPage() {
+    const disabled = this.flipbookService.isDisabled();
+    if (disabled) {
+      this.flipbookService.enable();
+    }
+
+    this.flipbookService.$flipbook.turn('page', this.currentPage);
+
+    if (disabled) {
+      this.flipbookService.disable();
+    }
+  }
+
+  onSliderValueChange(newValue: number): void {
+    const { page1, page2 } = this.getPageGroup();
+
     if (!this.isDragging && !this.animatingSlider && (this.lastTurnedByArrows != page1 && this.lastTurnedByArrows != page2)) {
-      console.log('Nuevo valor:', newValue);
-      //this.flipbookService.$flipbook.turn('stop');
-      this.flipbookService.$flipbook.turn('page', newValue);
+      this.ensureTurnPage();
+      this.setPageInfo();
       this.lastTurnedByArrows = newValue;
     }
   }
-  
-
 }
