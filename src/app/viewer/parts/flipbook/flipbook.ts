@@ -16,8 +16,6 @@ import { ElementMetricsService } from '../../../services/element-metrics.service
 export class Flipbook {
   @ViewChild('flipbook', { static: true }) flipbookRef!: ElementRef;
 
-  @Input() buttomBar = false;
-
   wrapperContainerStyle = {
     width: 0,
     height: 0,
@@ -104,7 +102,7 @@ export class Flipbook {
     this.wrapperContainerStyle.height = pageHeight;
     const offsetVh = getComputedStyle(document.documentElement).getPropertyValue('--bottom-bar-offset');
     const offsetDecimal = parseFloat(offsetVh) / 100;
-    const lessHeightButtomBar = this.buttomBar ? (this.buttomBarHeight + offsetDecimal * window.innerHeight) : 0;
+    const lessHeightButtomBar = this.buttomBarHeight + offsetDecimal * window.innerHeight;
     this.wrapperContainerStyle.top = (window.innerHeight - pageHeight - lessHeightButtomBar) / 2;
     this.wrapperContainerStyle.left = (window.innerWidth - flipbookWidth) / 2;
   }
@@ -112,7 +110,7 @@ export class Flipbook {
   private getFlibookSize(): { pageWidth: number, pageHeight: number, flipbookWidth: number } {
     const offsetVh = getComputedStyle(document.documentElement).getPropertyValue('--bottom-bar-offset');
     const offsetDecimal = parseFloat(offsetVh) / 100;
-    const availableHeight = window.innerHeight - (this.buttomBar ? (this.buttomBarHeight + offsetDecimal * window.innerHeight) : 0);
+    const availableHeight = window.innerHeight - (this.buttomBarHeight + offsetDecimal * window.innerHeight);
 
     let flipbookWidth = window.innerWidth * 0.95;
     let pageWidth = this.isLandscape ? flipbookWidth / 2 : flipbookWidth;

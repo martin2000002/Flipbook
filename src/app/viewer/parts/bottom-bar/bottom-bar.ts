@@ -18,8 +18,6 @@ export class BottomBar {
   @ViewChild('pageSlider', { static: true }) pageSliderRef!: ElementRef<HTMLInputElement>;
   @ViewChild('buttomBar') buttomBarRef!: ElementRef<HTMLDivElement>;
 
-  @Input() visible = false;
-
   isFullscreen = false;
   isDragging = false;
   showPreview = false;

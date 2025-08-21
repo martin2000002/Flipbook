@@ -46,14 +46,13 @@ input.page-slider[type="range"]:active::-webkit-slider-thumb {
 /* Firefox */
 input.page-slider[type="range"]::-moz-range-track {
     height: var(--slider-pages-thumb-height);
-    background: rgba(255, 255, 255, 0.2);
     overflow: visible;
 }
 
 input[type="range"]::-moz-range-progress {
     height: var(--slider-pages-thumb-height);
 }
-  
+
 
 input.page-slider[type="range"]::-moz-range-thumb {
     width: var(--slider-pages-thumb-width);
