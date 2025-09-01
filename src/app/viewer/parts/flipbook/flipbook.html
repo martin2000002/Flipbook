@@ -1,0 +1,21 @@
+<div class="flipbook-wrapper select-none zoom-wrapper" [ngStyle]="{
+    width: wrapperContainerStyle.width + 'px',
+    height: wrapperContainerStyle.height + 'px',
+    top: wrapperContainerStyle.top + 'px',
+    left: wrapperContainerStyle.left + 'px',
+    position: 'absolute',
+  }
+  
+  ">
+
+    <div #flipbook id="flipbook" style="transition: margin-left 0.7s ease-in-out;">
+
+        @for (image of pages; track $index) {
+            <div class="page">
+                <img [src]="image" loading="lazy" (load)="onImageLoad()" />
+            </div>
+        }
+
+    </div>
+
+</div>

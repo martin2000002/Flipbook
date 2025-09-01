@@ -1,0 +1,124 @@
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+:root {
+  --bottom-bar-offset: 5vh;
+  --slider-pages-thumb-width: 40px;
+  --slider-pages-thumb-height: 8px;
+  --slider-default-thumb-width: 0px;
+  --slider-default-thumb-height: 8px;
+  --slider-default-track-height: 8px;
+  --slider-background-color: rgba(255, 255, 255, 0.2);
+  --background-color: #222222;
+}
+
+@theme {
+  --breakpoint-sm-450: 450px;
+  --color-background-color: var(--background-color);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--background-color); 
+  height: 100%;
+}
+
+
+/* Desactiva los estilos nativos */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: var(--slider-default-track-height);
+  /* espacio vertical para track y thumb */
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* TRACK WebKit */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: var(--slider-default-track-height);
+  background: var(--slider-background-color);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+/* TRACK Firefox */
+input[type="range"]::-moz-range-track {
+  height: var(--slider-default-track-height);
+  background: var(--slider-background-color);
+  border-radius: 9999px;
+}
+
+/* Thumb Webkit */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--slider-default-thumb-width);
+  height: var(--slider-default-thumb-height);
+  background: white;
+  border-radius: 9999px;
+  box-shadow: -1000px 0 0 1000px white;
+
+  margin-top: calc((var(--slider-default-track-height) - var(--slider-default-thumb-height)) / 2);
+
+  position: relative;
+  z-index: 2;
+  transition: background 0.2s ease;
+}
+
+/* Thumb Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: var(--slider-default-thumb-width);
+  height: var(--slider-default-thumb-height);
+  background: white;
+  border-radius: 9999px;
+  border: 0;
+  margin-top: calc((var(--slider-default-track-height) - var(--slider-default-thumb-height)) / 2);
+
+  position: relative;
+  z-index: 2;
+  transition: background 0.2s ease;
+}
+
+/* Progress Firefox */
+input[type="range"]::-moz-range-progress {
+  background: white;
+  border-radius: 9999px;
+}
+
+input[type="range"]:focus {
+  outline: none;
+  /* quita el borde azul predeterminado */
+
+}
+
+input[type="range"]:focus-visible {
+  box-shadow: 0 0 7px var(--slider-background-color);
+  /* halo suave tipo macOS */
+  border-radius: 9999px;
+  /* opcional: bordes redondeados */
+  padding: 8px 6px;
+}
+
+#flipbook {
+  perspective: 1000px;
+}
+
+#flipbook .page {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#flipbook img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

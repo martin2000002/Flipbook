@@ -1,0 +1,78 @@
+.bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+
+    transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.4s ease-in-out;
+}
+
+.bottom-bar.visible {
+    transform: translateX(-50%) translateY(calc(0% - var(--bottom-bar-offset)));
+    opacity: 1;
+}
+
+/* Estilo base del input con clase page-slider */
+input.page-slider[type="range"] {
+    height: var(--slider-pages-thumb-height);
+    margin-bottom: 8px;
+    overflow: visible;
+}
+
+/* TRACK WebKit */
+input.page-slider[type="range"]::-webkit-slider-runnable-track {
+    overflow: visible;
+}
+
+/* TRACK Firefox */
+input.page-slider[type="range"]::-moz-range-track {
+    overflow: visible;
+    margin-top: 12px;
+}
+
+/* Thumb Webkit */
+input.page-slider[type="range"]::-webkit-slider-thumb {
+    width: var(--slider-pages-thumb-width);
+    height: var(--slider-pages-thumb-height);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+    margin-top: calc((var(--slider-default-track-height) - var(--slider-pages-thumb-height)) / 2);
+
+    /* Animación suave */
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    overflow: visible;
+}
+
+/* Rebote al hacer click o soltar */
+input.page-slider[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+    /* Efecto de rebote leve */
+}
+
+
+/* Thumb Firefox */
+input.page-slider[type="range"]::-moz-range-thumb {
+    width: var(--slider-pages-thumb-width);
+    height: calc(var(--slider-pages-thumb-height) - 3px);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+    margin-top: calc((var(--slider-default-track-height) - var(--slider-pages-thumb-height)) / 2);
+
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+input.page-slider[type="range"]:active::-moz-range-thumb {
+    transform: scale(1.2);
+    /* Rebote también en Firefox */
+}
+
+/* Progress Firefox */
+input.page-slider[type="range"]::-moz-range-progress {
+    background: transparent;
+}
+
+
+
+

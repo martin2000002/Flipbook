@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GYE622TRQX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-GYE622TRQX');
+</script>
+
+<head>
+  <meta charset="utf-8">
+  <title>Francesca Borja</title>
+  <meta name="description" content="Portafolio interactivo con información de mis proyectos de la carrera de Diseño de Interiores | Francesca Borja Aguirre">
+  <meta name="keywords" content="flipbook, portafolio, proyectos, USFQ, Diseño de Interiores, Francesca Borja, Universidad San Francisco de Quito">
+  <meta property="og:title" content="Portafolio Francesca Borja">
+  <meta property="og:description" content="Portafolio interactivo con información de mis proyectos de Diseño de Interiores">
+  
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <link rel="icon" type="image/x-icon" href="assets/logo.png">
+</head>
+
+<body>
+  <app-root></app-root>
+</body>
+<script>
+  // Bloquea zoom con Ctrl + scroll
+  document.addEventListener('wheel', function (e) {
+    if (e.ctrlKey) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Bloquea zoom con Ctrl + +/-
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && ['+', '-', '='].includes(e.key)) {
+      e.preventDefault();
+    }
+  });
+</script>
+
+</html>

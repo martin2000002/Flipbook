@@ -1,0 +1,14 @@
+@if (loading$ | async) {
+    <div class="fixed inset-0 flex flex-col items-center justify-center z-50 bg-background-color">
+        <app-lottie-player [path]="lottieOptions.path" [loop]="lottieOptions.loop" [autoplay]="lottieOptions.autoplay"
+            (animationReady)="onLottieReady()"
+            class="will-change-transform translate-z-0 w-[21vmin] h-[21vmin] object-contain mb-4">
+        </app-lottie-player>
+
+        @if (lottieReady) {
+            <div class="text-white text-lg font-semibold tracking-wide font-sans">
+                {{ progress$ | async }}%
+            </div>
+        }
+    </div>
+}

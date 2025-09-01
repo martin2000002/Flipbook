@@ -1,0 +1,19 @@
+<button
+  (mouseenter)="onPress()"
+  (mouseleave)="onRelease()"
+
+  (click)="onClick()"
+  class="flex items-center justify-center cursor-pointer transition-all duration-200"
+  [ngClass]="{
+    'scale-95': hovered,
+    'scale-105': released
+  }"
+>
+  <lucide-angular
+    [img]="icon"
+    [size]="size"
+    [strokeWidth]="strokeWidth"
+    [color]="hovered ? '#D1D5DB' : 'white'"
+  >
+  </lucide-angular>
+</button>

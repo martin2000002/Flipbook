@@ -1,0 +1,89 @@
+<!-- Vista previa flotante sobre el thumb -->
+@if (showPreview) {
+    <div #preview class="absolute z-40 transition-opacity duration-200 pointer-events-auto select-none"
+        [ngStyle]="{ left: previewContainerStyle.left + 'px', top: previewContainerStyle.top + 'px'}"
+        [style.opacity]="isDragging ? '1' : '0'">
+        <div
+            class="bg-black/60 backdrop-blur text-white rounded-2xl shadow-xl pt-2 pr-2 pl-2 pb-0 flex flex-col items-center">
+
+            <div class="flex gap-1 justify-center">
+                @if (previewImages.length === 1){
+                    <img [src]="previewImages[0]" class="rounded-xl object-contain"
+                        [ngStyle]="{ width: previewImageStyle.width + 'px', height: previewImageStyle.height + 'px' }" />
+                }
+                @if (previewImages.length === 2) {
+                    <img [src]="previewImages[0]" class="rounded-md object-contain"
+                        [ngStyle]="{ width: previewImageStyle.width + 'px', height: previewImageStyle.height + 'px' }" />
+                    <img [src]="previewImages[1]" class="rounded-md object-contain"
+                        [ngStyle]="{ width: previewImageStyle.width + 'px', height: previewImageStyle.height + 'px' }" />
+                }
+            </div>
+
+            <div class="flex items-center justify-center py-1">
+                <div class="text-xs font-medium text-center">
+                    {{ previewLabel }}
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Contenedor inferior -->
+<div #buttomBar class="bottom-bar  z-40 pointer-events-auto visible
+    w-[85vw] sm:w-[85vw] md:w-[80vw] lg:w-[70vw] xl:w-[65vw] min-w-[200px]">
+    <div class="w-full bg-black/60 backdrop-blur text-white rounded-full shadow-lg space-y-3 
+    px-6 sm:px-8 md:px-9
+    py-2">
+
+        <!-- Slider de páginas (funcional como slider) -->
+        <input #pageSlider type="range" min="1" [max]="totalPages" [step]="sliderStep" [(ngModel)]="currentPageSlider"
+            (mousedown)="onSliderStart()" (touchstart)="onSliderTouchStartPage($event, pageSlider)"
+            (input)="onSliderMove()" (mouseup)="onSliderEnd()" (ngModelChange)="onSliderValueChange($event)"
+            class="w-full bg-white/20 rounded-full accent-white cursor-pointer page-slider" 
+            [ngClass]="{
+                'pt-2': isFirefox
+              }"
+            />
+
+
+        <!-- Controles -->
+        <div class="flex items-center justify-between w-full h-[24px]">
+
+            <!-- Izquierda: Número de página -->
+            <div class="text-sm font-medium text-left select-none" [ngStyle]="{ width: pageTextWidth }">
+                {{ pagesText }}
+            </div>
+
+            <!-- Centro: Control de Zoom (20% del ancho y centrado) -->
+            <div class="flex items-center justify-center gap-1
+            w-[50%] sm:w-[45%] md:w-[40%] lg:w-[35%] xl:w-[30%]">
+                <!-- Botón de ZoomOut -->
+                <app-icon-button [icon]="icons.minus" (action)="zoomOut()">
+                </app-icon-button>
+
+                <!-- Slider de zoom -->
+                <input #zoomSlider type="range" min="0" max="9" step="0.1" [(ngModel)]="zoom" (input)="onSliderChange()"
+                    (touchstart)="onSliderTouchStartZoom($event, zoomSlider)"
+                    class="w-full h-[7px] accent-white min-w-[120px]" />
+
+                <!-- Botón de ZoomOut -->
+                <app-icon-button [icon]="icons.plus" (action)="zoomIn()">
+                </app-icon-button>
+            </div>
+
+            <!-- Derecha: Iconos -->
+            <div class="flex gap-4 items-center justify-end" [ngStyle]="{ width: pageTextWidth }">
+
+                <!-- Botón de descargar -->
+                <app-icon-button [icon]="icons.download" (action)="downloadPDF()">
+                </app-icon-button>
+
+                <!-- Botón de fullscreen -->
+                @if (!isMobile) {
+                    <app-icon-button [icon]="isFullscreen ? icons.minimize : icons.maximize" (action)="toggleFullscreen()">
+                    </app-icon-button>
+                }
+
+            </div>
+        </div>
+    </div>
